@@ -81,8 +81,11 @@ substring scan flags a docstring mentioning `str(exc)` and a dict literal
 
 ## Deployment
 
-- Memory: 256 MB in `actor.json`. Verify real peak on the first platform run;
-  directory HTML pages reach ~3.2 MB before trimming.
+- Memory: 128 MB in `actor.json`, confirmed against three platform runs on
+  2026-08-25: 51.6 MB (one profile), 81.6 MB (three directory pages), and
+  81.0 MB for the worst case (10 profiles, all three output formats, 278 rows).
+  The chunk loop bounds peak memory at one chunk, so a larger input does not
+  raise the peak; 256 MB was doubling compute cost for nothing.
 - Post-build API calls the Console does not inherit from `actor.json`:
   `PUT /v2/acts/<id>` with `defaultRunOptions` (timeoutSecs, memoryMbytes,
   build), plus title/description/seoTitle/seoDescription/categories.

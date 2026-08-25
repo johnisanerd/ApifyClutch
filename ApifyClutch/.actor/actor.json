@@ -4,8 +4,8 @@
   "title": "Clutch.co Agency API: B2B Company Data, Directory & Reviews",
   "description": "Company data API for Clutch.co, the B2B directory of agencies and service providers. Build a marketing agency database with ratings, pricing, service mix, team size, locations and every verified client review, returned as JSON plus LLM-ready markdown. Pay per row, MCP-ready for Claude and AI agents.",
   "version": "1.0",
-  "minMemoryMbytes": 256,
-  "maxMemoryMbytes": 256,
+  "minMemoryMbytes": 128,
+  "maxMemoryMbytes": 128,
   "buildTag": "latest",
   "meta": {
     "templateId": "python-start",
