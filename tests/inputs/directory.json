@@ -1,0 +1,6 @@
+{
+  "mode": "directory",
+  "directoryUrls": ["https://clutch.co/web-developers"],
+  "maxPagesPerDirectory": 1,
+  "maxItems": 5
+}

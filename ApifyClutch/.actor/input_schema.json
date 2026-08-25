@@ -1,0 +1,97 @@
+{
+  "title": "Clutch.co Agency API",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "mode": {
+      "title": "What do you want to collect?",
+      "type": "string",
+      "description": "Directory mode walks a Clutch category or location page and returns one row per listed company. Profiles mode collects specific companies in full, with their client reviews. Search mode runs a keyword query and then collects the companies it finds.",
+      "editor": "select",
+      "default": "directory",
+      "enum": ["directory", "profiles", "search"],
+      "enumTitles": [
+        "Browse a directory or category (recommended)",
+        "Collect specific company profiles",
+        "Search by keyword"
+      ]
+    },
+    "directoryUrls": {
+      "title": "Directory URLs",
+      "type": "array",
+      "description": "Clutch category, location, or industry pages. Any Clutch directory path works, for example https://clutch.co/web-developers or https://clutch.co/us/agencies/digital-marketing/chicago. Each company row is charged once. Need larger batches? Contact us and we can raise this limit for your account.",
+      "editor": "stringList",
+      "prefill": [
+        "https://clutch.co/web-developers"
+      ],
+      "maxItems": 100
+    },
+    "maxPagesPerDirectory": {
+      "title": "Pages per directory",
+      "type": "integer",
+      "description": "How many result pages to read per directory URL. Each page carries about 50 companies. Pages are fetched only up to this limit, so raising it is what increases both results and cost.",
+      "editor": "number",
+      "default": 1,
+      "minimum": 1,
+      "maximum": 50
+    },
+    "profileUrls": {
+      "title": "Company profile URLs",
+      "type": "array",
+      "description": "Clutch company profiles to collect in full, for example https://clutch.co/profile/ignite-visibility. A bare slug such as ignite-visibility also works. Need larger batches? Contact us and we can raise this limit for your account.",
+      "editor": "stringList",
+      "prefill": [
+        "https://clutch.co/profile/ignite-visibility"
+      ],
+      "maxItems": 500
+    },
+    "searchQueries": {
+      "title": "Search keywords",
+      "type": "array",
+      "description": "Free-text queries run against Clutch search, for example \"shopify development\" or \"healthcare branding\". Matching companies are then collected as full profiles.",
+      "editor": "stringList",
+      "prefill": [
+        "shopify development"
+      ],
+      "maxItems": 20
+    },
+    "includeReviews": {
+      "title": "Include client reviews",
+      "type": "boolean",
+      "description": "Return every verified client review for each company as its own row, with project size, project length, sub-ratings, reviewer role, and summaries. Applies to profile and search modes.",
+      "default": true
+    },
+    "maxReviewsPerProfile": {
+      "title": "Maximum reviews per company",
+      "type": "integer",
+      "description": "Upper bound on reviews collected per company. The first page of a profile already carries about 40 reviews at no extra cost; higher values page deeper and cost more.",
+      "editor": "number",
+      "default": 100,
+      "minimum": 1,
+      "maximum": 2000
+    },
+    "outputFormats": {
+      "title": "Output formats",
+      "type": "array",
+      "description": "JSON gives structured fields. Markdown adds Clutch's own LLM-ready markdown for the page, which costs nothing extra and is ideal for RAG and AI agents. HTML adds the raw page source and costs one additional request per company.",
+      "editor": "select",
+      "default": ["json", "markdown"],
+      "items": {
+        "type": "string",
+        "enum": ["json", "markdown", "html"],
+        "enumTitles": ["JSON (structured fields)", "Markdown (LLM-ready)", "Raw HTML (extra request)"]
+      },
+      "uniqueItems": true
+    },
+    "maxItems": {
+      "title": "Maximum rows",
+      "type": "integer",
+      "description": "Overall cap on rows returned by this run, across listings, profiles, and reviews. Use it as a hard spend ceiling.",
+      "editor": "number",
+      "default": 1000,
+      "minimum": 1,
+      "maximum": 10000
+    }
+  },
+  "required": ["mode"]
+}

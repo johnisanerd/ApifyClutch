@@ -1,0 +1,55 @@
+{
+  "actorSpecification": 1,
+  "name": "clutch-agency-api",
+  "title": "Clutch.co Agency API: B2B Company Data, Directory & Reviews",
+  "description": "Company data API for Clutch.co, the B2B directory of agencies and service providers. Build a marketing agency database with ratings, pricing, service mix, team size, locations and every verified client review, returned as JSON plus LLM-ready markdown. Pay per row, MCP-ready for Claude and AI agents.",
+  "version": "1.0",
+  "minMemoryMbytes": 256,
+  "maxMemoryMbytes": 256,
+  "buildTag": "latest",
+  "meta": {
+    "templateId": "python-start",
+    "isMcpServerCompatible": true
+  },
+  "categories": [
+    "BUSINESS",
+    "AI"
+  ],
+  "tags": [
+    "clutch-co",
+    "company-data-api",
+    "b2b-directory",
+    "marketing-agency-database",
+    "b2b-service-providers",
+    "agency-reviews",
+    "api",
+    "mcp"
+  ],
+  "input": "./input_schema.json",
+  "output": "./output_schema.json",
+  "readme": "./README.md",
+  "dockerfile": "../Dockerfile",
+  "storages": {
+    "dataset": "./dataset_schema.json"
+  },
+  "pricing": {
+    "model": "pay-per-event",
+    "events": [
+      {
+        "name": "listing-scraped",
+        "price": 0.0003,
+        "description": "Fee per company row returned from a directory or category page. Charged once for each listing pushed to the dataset."
+      },
+      {
+        "name": "profile-scraped",
+        "price": 0.0025,
+        "description": "Fee per full company profile returned, including ratings, pricing, service mix, focus areas, industries and locations. Charged once for each profile pushed to the dataset."
+      },
+      {
+        "name": "review-scraped",
+        "price": 0.0003,
+        "description": "Fee per client review returned. Charged once for each review pushed to the dataset. Only charged when reviews are enabled."
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Clutch.co Agency Results",
+  "description": "One row per company listing, company profile, or client review. Each dataset item has a `result_type` field whose value is 'listing', 'profile', 'review' or 'error'.",
+  "properties": {
+    "allResults": {
+      "type": "string",
+      "title": "All Results",
+      "description": "Every dataset item from this run: listings, profiles, reviews, and any error rows.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    },
+    "companies": {
+      "type": "string",
+      "title": "Companies Overview",
+      "description": "Tabular overview: name, rating, review count, minimum project size, hourly rate, employees, location, and website.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items?view=companies"
+    },
+    "reviews": {
+      "type": "string",
+      "title": "Client Reviews",
+      "description": "Every client review with its project details, ratings, reviewer, and summaries.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items?view=reviews"
+    }
+  }
+}

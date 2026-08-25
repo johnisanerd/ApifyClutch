@@ -1,0 +1,8 @@
+{
+  "mode": "profiles",
+  "profileUrls": ["https://clutch.co/profile/ignite-visibility"],
+  "includeReviews": true,
+  "maxReviewsPerProfile": 5,
+  "outputFormats": ["json", "markdown"],
+  "maxItems": 8
+}

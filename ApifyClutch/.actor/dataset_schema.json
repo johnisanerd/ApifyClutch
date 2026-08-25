@@ -1,0 +1,415 @@
+{
+  "actorSpecification": 1,
+  "fields": {
+    "type": "object",
+    "properties": {
+      "result_type": {
+        "type": "string",
+        "title": "Row type",
+        "description": "Which kind of row this is: a directory listing, a full company profile, a client review, or an error for one input.",
+        "enum": ["listing", "profile", "review", "error"],
+        "example": "profile"
+      },
+      "name": {
+        "type": "string",
+        "title": "Company name",
+        "description": "Company name as listed on Clutch.",
+        "example": "Ignite Visibility"
+      },
+      "slug": {
+        "type": "string",
+        "title": "Slug",
+        "description": "Stable Clutch identifier for the company, taken from its profile URL.",
+        "example": "ignite-visibility"
+      },
+      "profile_url": {
+        "type": "string",
+        "title": "Profile URL",
+        "description": "Direct link to the company's Clutch profile.",
+        "example": "https://clutch.co/profile/ignite-visibility"
+      },
+      "source_url": {
+        "type": "string",
+        "title": "Source URL",
+        "description": "The directory page or input URL this row came from.",
+        "example": "https://clutch.co/web-developers"
+      },
+      "website": {
+        "type": "string",
+        "title": "Website",
+        "description": "The company's own website, with Clutch referral tracking parameters removed.",
+        "example": "https://ignitevisibility.com"
+      },
+      "description": {
+        "type": "string",
+        "title": "Description",
+        "description": "Company description as published on Clutch.",
+        "example": "ROI-Driven Digital Marketing Agency"
+      },
+      "rating": {
+        "type": "number",
+        "title": "Rating",
+        "description": "Average client review rating out of 5.",
+        "example": 4.8
+      },
+      "review_count": {
+        "type": "integer",
+        "title": "Review count",
+        "description": "Total number of verified client reviews on the profile.",
+        "example": 175
+      },
+      "is_verified": {
+        "type": "boolean",
+        "title": "Verified",
+        "description": "Whether Clutch shows a verification badge for this company.",
+        "example": true
+      },
+      "verification": {
+        "type": "array",
+        "title": "Verification badges",
+        "description": "Verification badges shown on the profile, such as Verified or Premier Verified.",
+        "example": ["Premier Verified"]
+      },
+      "min_project_size": {
+        "type": "string",
+        "title": "Minimum project size",
+        "description": "Smallest project the company accepts.",
+        "example": "$1,000+"
+      },
+      "hourly_rate": {
+        "type": "string",
+        "title": "Hourly rate",
+        "description": "Published hourly rate band.",
+        "example": "$100 - $149"
+      },
+      "employees": {
+        "type": "string",
+        "title": "Employees",
+        "description": "Company size band.",
+        "example": "250 - 999"
+      },
+      "location": {
+        "type": "string",
+        "title": "Location",
+        "description": "Location shown on a directory listing.",
+        "example": "San Diego, CA"
+      },
+      "headquarters": {
+        "type": "string",
+        "title": "Headquarters",
+        "description": "Headquarters location from the company profile.",
+        "example": "San Diego, CA"
+      },
+      "locations": {
+        "type": "array",
+        "title": "Locations",
+        "description": "Every office location, each flagged for whether it is the headquarters.",
+        "example": [{ "location": "San Diego, CA", "is_headquarters": true }]
+      },
+      "location_count": {
+        "type": "integer",
+        "title": "Location count",
+        "description": "Number of office locations listed.",
+        "example": 5
+      },
+      "founded_year": {
+        "type": "integer",
+        "title": "Founded",
+        "description": "Year the company was founded.",
+        "example": 2013
+      },
+      "phone": {
+        "type": "string",
+        "title": "Phone",
+        "description": "Contact phone number, available when raw HTML is requested.",
+        "example": "6197521955"
+      },
+      "address": {
+        "type": "object",
+        "title": "Postal address",
+        "description": "Full postal address, available when raw HTML is requested.",
+        "example": { "country": "US", "locality": "San Diego", "region": "CA", "postal_code": "92037", "street": "4250 Executive Square Suite #100" }
+      },
+      "languages": {
+        "type": "array",
+        "title": "Languages",
+        "description": "Languages the company works in.",
+        "example": ["English", "Spanish"]
+      },
+      "timezones": {
+        "type": "array",
+        "title": "Timezones",
+        "description": "Timezones the company covers.",
+        "example": ["Eastern Standard Time (EST)"]
+      },
+      "connections": {
+        "type": "integer",
+        "title": "Connections",
+        "description": "Number of Clutch members who joined the company's network.",
+        "example": 43
+      },
+      "service_lines": {
+        "type": "array",
+        "title": "Service lines",
+        "description": "Services offered, each with the percentage of work it represents.",
+        "example": [{ "name": "Search Engine Optimization", "percent": 30 }]
+      },
+      "focus_areas": {
+        "type": "array",
+        "title": "Focus areas",
+        "description": "Technology and specialism breakdowns, grouped by discipline, each with percentages.",
+        "example": [{ "group": "SEO Focus", "items": [{ "name": "Local search", "percent": 20 }] }]
+      },
+      "industries": {
+        "type": "array",
+        "title": "Industries",
+        "description": "Industries served, each with the percentage of work it represents.",
+        "example": [{ "name": "Home Services", "percent": 10 }]
+      },
+      "clients": {
+        "type": "array",
+        "title": "Client sizes",
+        "description": "Client size distribution across small business, midmarket, and enterprise.",
+        "example": [{ "name": "Midmarket ($10M - $1B)", "percent": 50 }]
+      },
+      "cost_rating": {
+        "type": "number",
+        "title": "Cost rating",
+        "description": "Average client rating for cost, out of 5.",
+        "example": 4.7
+      },
+      "most_common_project_size": {
+        "type": "string",
+        "title": "Most common project size",
+        "description": "The project size band most often reported by reviewers.",
+        "example": "$50,000 to $199,999"
+      },
+      "most_common_project_size_reviews": {
+        "type": "integer",
+        "title": "Reviews behind project size",
+        "description": "How many reviews the most common project size is based on.",
+        "example": 134
+      },
+      "pricing_by_service": {
+        "type": "array",
+        "title": "Pricing by service",
+        "description": "Typical project size per service line, with the number of reviews behind each figure.",
+        "example": [{ "service": "Search Engine Optimization", "project_size": "$50,000 to $199,999", "review_count": 70 }]
+      },
+      "packages": {
+        "type": "array",
+        "title": "Packages",
+        "description": "Fixed-price packages the company publishes.",
+        "example": ["Search Engine Optimization Packages — starting at $3,500/month"]
+      },
+      "review_rating_overall": {
+        "type": "number",
+        "title": "Overall review rating",
+        "description": "Overall review rating from the profile's review insights block.",
+        "example": 4.8
+      },
+      "review_ratings": {
+        "type": "object",
+        "title": "Rating breakdown",
+        "description": "Average sub-ratings for quality, schedule, cost, and willingness to refer.",
+        "example": { "quality": 4.8, "schedule": 4.9, "cost": 4.7, "willing_to_refer": 4.8 }
+      },
+      "top_mentions": {
+        "type": "array",
+        "title": "Top mentions",
+        "description": "Themes reviewers mention most, with how often each appears.",
+        "example": [{ "mention": "Timely", "count": 45 }]
+      },
+      "has_reviews": {
+        "type": "boolean",
+        "title": "Has reviews",
+        "description": "Whether any client reviews were found on the profile.",
+        "example": true
+      },
+      "markdown": {
+        "type": "string",
+        "title": "Markdown",
+        "description": "Clutch's own LLM-ready markdown rendering of the page. Ideal for RAG pipelines and AI agents.",
+        "example": "# Ignite Visibility\n## Company Information\n..."
+      },
+      "html": {
+        "type": "string",
+        "title": "Raw HTML",
+        "description": "Raw page source, returned only when the HTML output format is selected.",
+        "example": "<!doctype html>..."
+      },
+      "title": {
+        "type": "string",
+        "title": "Review title",
+        "description": "Title of a client review.",
+        "example": "Web Dev for Recruitment Company"
+      },
+      "is_featured": {
+        "type": "boolean",
+        "title": "Featured review",
+        "description": "Whether Clutch marks this review as the featured review.",
+        "example": true
+      },
+      "review_date": {
+        "type": "string",
+        "title": "Review date",
+        "description": "Date the review was published, as shown on Clutch.",
+        "example": "Nov 2, 2022"
+      },
+      "ratings": {
+        "type": "object",
+        "title": "Review sub-ratings",
+        "description": "This reviewer's sub-ratings for quality, schedule, cost, and willingness to refer.",
+        "example": { "quality": 5.0, "schedule": 5.0, "cost": 5.0, "willing_to_refer": 5.0 }
+      },
+      "project_services": {
+        "type": "string",
+        "title": "Project services",
+        "description": "Services delivered in the reviewed project.",
+        "example": "Custom Software Development"
+      },
+      "project_size": {
+        "type": "string",
+        "title": "Project size",
+        "description": "Budget band for the reviewed project.",
+        "example": "$1,000,000 to $9,999,999"
+      },
+      "project_length": {
+        "type": "string",
+        "title": "Project length",
+        "description": "Duration of the reviewed project.",
+        "example": "Nov. 2022 - Ongoing"
+      },
+      "project_summary": {
+        "type": "string",
+        "title": "Project summary",
+        "description": "What the company was hired to do.",
+        "example": "Hired to build a new CMS using Next.js and rebuild a customer-facing website."
+      },
+      "feedback_summary": {
+        "type": "string",
+        "title": "Feedback summary",
+        "description": "Clutch's summary of the client's feedback.",
+        "example": "The team has been very communicative and responsive weekly via Slack."
+      },
+      "reviewer": {
+        "type": "string",
+        "title": "Reviewer",
+        "description": "Reviewer's role and company, as published.",
+        "example": "Senior Director, SelectQuote"
+      },
+      "reviewer_industry": {
+        "type": "string",
+        "title": "Reviewer industry",
+        "description": "Industry of the reviewing company.",
+        "example": "Other industries"
+      },
+      "reviewer_client_size": {
+        "type": "string",
+        "title": "Reviewer company size",
+        "description": "Employee band of the reviewing company.",
+        "example": "1,001-5,000 Employees"
+      },
+      "reviewer_review_type": {
+        "type": "string",
+        "title": "Review type",
+        "description": "How the review was collected, for example an online review or a phone interview.",
+        "example": "Online Review"
+      },
+      "reviewer_is_verified": {
+        "type": "boolean",
+        "title": "Reviewer verified",
+        "description": "Whether Clutch verified this reviewer's identity.",
+        "example": true
+      },
+      "company_name": {
+        "type": "string",
+        "title": "Reviewed company",
+        "description": "Name of the company this review belongs to.",
+        "example": "Ignite Visibility"
+      },
+      "company_slug": {
+        "type": "string",
+        "title": "Reviewed company slug",
+        "description": "Clutch slug of the company this review belongs to.",
+        "example": "ignite-visibility"
+      },
+      "fetched_at": {
+        "type": "string",
+        "title": "Fetched at",
+        "description": "UTC timestamp of when this row was collected.",
+        "example": "2026-08-20T12:00:00+00:00"
+      },
+      "error_message": {
+        "type": "string",
+        "title": "Error message",
+        "description": "Plain-language description of what went wrong for one input.",
+        "example": "that page was not found on the site"
+      },
+      "error_type": {
+        "type": "string",
+        "title": "Error type",
+        "description": "Category of the error.",
+        "example": "FetchError"
+      }
+    }
+  },
+  "views": {
+    "companies": {
+      "title": "Companies Overview",
+      "transformation": {
+        "fields": [
+          "result_type", "name", "rating", "review_count", "min_project_size",
+          "hourly_rate", "employees", "location", "headquarters", "founded_year",
+          "is_verified", "website", "profile_url"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "result_type": { "label": "Type" },
+          "name": { "label": "Company" },
+          "rating": { "label": "Rating", "format": "number" },
+          "review_count": { "label": "Reviews", "format": "number" },
+          "min_project_size": { "label": "Min project" },
+          "hourly_rate": { "label": "Hourly rate" },
+          "employees": { "label": "Employees" },
+          "location": { "label": "Location" },
+          "headquarters": { "label": "HQ" },
+          "founded_year": { "label": "Founded", "format": "number" },
+          "is_verified": { "label": "Verified" },
+          "website": { "label": "Website", "format": "link" },
+          "profile_url": { "label": "Clutch profile", "format": "link" }
+        }
+      }
+    },
+    "reviews": {
+      "title": "Client Reviews",
+      "transformation": {
+        "fields": [
+          "result_type", "company_name", "title", "rating", "review_date",
+          "project_services", "project_size", "project_length", "reviewer",
+          "reviewer_industry", "reviewer_client_size", "feedback_summary", "profile_url"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "result_type": { "label": "Type" },
+          "company_name": { "label": "Company" },
+          "title": { "label": "Review" },
+          "rating": { "label": "Rating", "format": "number" },
+          "review_date": { "label": "Date" },
+          "project_services": { "label": "Services" },
+          "project_size": { "label": "Project size" },
+          "project_length": { "label": "Length" },
+          "reviewer": { "label": "Reviewer" },
+          "reviewer_industry": { "label": "Industry" },
+          "reviewer_client_size": { "label": "Client size" },
+          "feedback_summary": { "label": "Feedback" },
+          "profile_url": { "label": "Clutch profile", "format": "link" }
+        }
+      }
+    }
+  }
+}

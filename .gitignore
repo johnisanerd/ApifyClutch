@@ -1,0 +1,17 @@
+
+# Apify runtime artifacts
+# Local secrets
+# Python bytecode
+# Test logs
+# uv
+*.pyc
+*.pyo
+.env
+.venv/
+__pycache__/
+apify_storage/
+crawlee_storage/
+storage/
+test_actor.log
+tests/.last_run.log
+tests/.last_run.stderr
