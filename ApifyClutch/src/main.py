@@ -35,6 +35,7 @@ import datetime
 from decimal import Decimal
 
 from apify import Actor
+from apify_free_tier import FreeTierGuard
 from dotenv import load_dotenv
 
 from .clutch import (
@@ -86,11 +87,19 @@ def _clean(row: dict) -> dict:
     return {k: v for k, v in row.items() if v is not None}
 
 
+# Set once in _run() after the free-tier guard starts. Routing the guard through
+# this existing helper covers every charge site with one change.
+_guard = None
+
+
 async def _charge(event_name: str, count: int = 1) -> bool:
-    """Charge an event. Returns True when the run's charge limit is reached, so
-    the caller can stop pushing rows it cannot bill."""
+    """Charge an event. Returns True when the caller should stop pushing rows -
+    either the run's charge limit was reached, or a free user spent their monthly
+    allowance."""
     if not Actor.is_at_home() or count <= 0:
         return False
+    if _guard is not None:
+        return await _guard.charge(event_name, count)
     try:
         result = await Actor.charge(event_name, count)
         return bool(getattr(result, "event_charge_limit_reached", False))
@@ -199,6 +208,14 @@ async def _run() -> None:  # noqa: C901
             await _fail("No search queries were provided. Give at least one keyword.",
                         "InvalidInput")
             return
+
+    # Free-tier cap. Paying users are unaffected and make no database call; a
+    # free user already over their monthly allowance is turned away here, after
+    # the cheap local validation but before any network fetch. close() in main().
+    global _guard
+    _guard = await FreeTierGuard.start()
+    if _guard.blocked:
+        return
 
     fetcher = await build_fetcher(Actor)
     total = 0
@@ -425,7 +442,10 @@ async def _run() -> None:  # noqa: C901
                         stop = True
                         break
 
-    await Actor.set_status_message(f"Done. {total} row(s) collected.", is_terminal=True)
+    # The guard sets its own terminal message when the allowance is spent; only
+    # overwrite it otherwise.
+    if _guard is None or not _guard.exhausted:
+        await Actor.set_status_message(f"Done. {total} row(s) collected.", is_terminal=True)
 
 
 async def main() -> None:
@@ -433,6 +453,8 @@ async def main() -> None:
         try:
             await _run()
         finally:
+            if _guard is not None:
+                await _guard.close()
             Actor.log.info(
                 "Thanks for running this Actor. Support, docs, and more data "
                 "sources: https://www.alphaosint.com"

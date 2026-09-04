@@ -5,9 +5,15 @@ description = "Apify Actor that collects structured records from a web data sour
 requires-python = ">=3.13"
 dependencies = [
     "apify>=3.4,<4",
+    "apify-free-tier",
     "curl-cffi>=0.7,<1",
     "python-dotenv>=1.0,<2",
 ]
 
 [tool.uv]
 package = false
+
+# Pinned to a release tag, not a branch, so a rebuild is reproducible. The
+# tarball form needs no git binary inside the Actor image.
+[tool.uv.sources]
+apify-free-tier = { url = "https://github.com/johnisanerd/Apify-Free-Tier-Limiter/archive/refs/tags/v0.1.8.tar.gz" }
