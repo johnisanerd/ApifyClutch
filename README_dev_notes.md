@@ -90,3 +90,34 @@ substring scan flags a docstring mentioning `str(exc)` and a dict literal
   `PUT /v2/acts/<id>` with `defaultRunOptions` (timeoutSecs, memoryMbytes,
   build), plus title/description/seoTitle/seoDescription/categories.
 - No environment variables and no secrets to configure.
+
+## Pricing (first-time monetization, 2026-09-03)
+
+No upstream vendor, so break-even is Apify compute + egress only. Measured from
+`usageTotalUsd` on real runs: the worst case (10 profiles, all formats, 278 rows)
+cost **$0.00219 total = ~$0.000008/row**. On pay-per-event Apify covers
+paying-user compute, so effective developer COGS is ~$0. Every tier clears
+break-even by 30-300x; the pricing decision is positioning, not cost.
+
+Strategy: **Loss Leader on listings, Market-undercut on profiles.** Cheapest in
+category on all three events while FREE tier holds at/above the nearest rival.
+
+| Event (primary = profile) | FREE | BRONZE | SILVER | GOLD | vs market |
+|---|---|---|---|---|---|
+| profile-scraped | 0.0029 | 0.0025 | 0.00225 | 0.0020 | GOLD 31% under memo23 ($0.0029) |
+| listing-scraped | 0.0004 | 0.0003 | 0.00027 | 0.00024 | GOLD 6x under piotrv1001 ($0.0015) |
+| review-scraped | 0.0004 | 0.0003 | 0.00027 | 0.00024 | GOLD under everyone |
+| apify-default-dataset-item | | | | 0.00001 | platform accounting, flat |
+
+PLATINUM and DIAMOND inherit GOLD. No `apify-actor-start` event: the README
+promises "no start fee," and the tripadvisor precedent runs with only the
+dataset-item default. First-time monetization is immediate (no 14-day window).
+
+Benchmarks (live 2026-09-03): memo23 (leader, 740 users, 4.6 stars, company
+$0.0029 + $0.00075/review), crawlerbros (broken incumbent, 1345 users, 16%
+success, GOLD $0.005 + $0.005 start), piotrv1001 (listings $0.0015, 1218 users),
+fatihtahta (price floor, listing $0.0007-0.0009). A memo23 "company + 10 reviews"
+is $0.0104; ours is $0.0055 for the same data plus markdown.
+
+`.actor/actor.json` mirrors the BRONZE tier and is in sync. Ledger:
+`ApifyUpdate/pricing_changes.json` + `PRICING_LEDGER.md`.
