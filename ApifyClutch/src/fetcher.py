@@ -138,8 +138,20 @@ class ClutchFetcher:
     def _tiers(self) -> list[tuple[str, str | None]]:
         return [(t, self.proxy_urls[t]) for t in self.tier_order if t in self.proxy_urls]
 
-    async def fetch(self, url: str) -> FetchResult:
-        """Fetch one URL. Returns a FetchResult; never raises for HTTP problems."""
+    async def fetch(self, url: str, expect: str | None = None) -> FetchResult:
+        """Fetch one URL. Returns a FetchResult; never raises for HTTP problems.
+
+        `expect`, when given, is a substring that a genuine full response must
+        contain. Some datacenter IPs get a soft challenge from Clutch: a 200
+        with a stripped-down body that carries no `cf-mitigated` header and no
+        interstitial marker, so `looks_like_challenge` cannot see it, yet the
+        page is missing its real content. Passing the marker that a full page
+        always carries (a listing wrapper class, say) lets such a response
+        escalate to the next proxy tier instead of being parsed into 0 rows and
+        silently reported as success. Verified 2026-09: directory HTML pages
+        intermittently came back sparse from the platform's shared egress; the
+        markers are absent on those and present on a real page.
+        """
         from curl_cffi.requests import AsyncSession
 
         last: FetchResult | None = None
@@ -170,10 +182,17 @@ class ClutchFetcher:
                             # A 404 is definitive; escalating tiers cannot fix it.
                             if resp.status_code == 404:
                                 return last
+                        elif expect is not None and expect not in body:
+                            # Soft challenge: a 200 that is missing its real
+                            # content. Escalate to the next tier rather than
+                            # accept a stripped page.
+                            last = FetchResult(url, resp.status_code, "", False, tier, ERR_BLOCKED)
+                            break
                         else:
                             return FetchResult(url, resp.status_code, body, True, tier)
                     else:
                         last = FetchResult(url, resp.status_code, "", False, tier, ERR_BLOCKED)
+                        break
                 except Exception as exc:
                     last = FetchResult(url, 0, "", False, tier, describe_error(exc))
                 await asyncio.sleep(0.4 * attempt)

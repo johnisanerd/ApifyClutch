@@ -11,10 +11,11 @@ than the HTML, better structured, and carries fields the HTML cards omit, so a
 profile row can carry publish-ready `markdown` at no extra fetch. Raw `html` is
 an opt-in format because it costs a second request.
 
-Directory listings are the exception: the `.md` twin of a directory page ignores
-`?page=`, returning the same companies for every page, so directory mode reads
-the HTML page, which does paginate. Directory rows therefore carry structured
-fields only; `markdown` and `html` formats apply to profile rows.
+Directory mode reads page 0 from the directory's `.md` twin (lighter and more
+reliable, and it carries website and description the HTML cards omit) and deeper
+pages from the paginating HTML, because the `.md` twin ignores `?page=`. Every
+directory fetch escalates through the proxy tiers on a soft challenge. Directory
+rows carry structured fields; `markdown` and `html` formats apply to profile rows.
 
 Charges pay-per-event: `listing-scraped` per directory row, `profile-scraped`
 per company profile, `review-scraped` per client review.
@@ -42,6 +43,7 @@ from .clutch import (
     normalize_directory_url,
     normalize_profile_url,
     parse_directory_html,
+    parse_directory_markdown,
     parse_profile_html,
     parse_profile_markdown,
     parse_reviews_markdown,
@@ -227,32 +229,62 @@ async def _run() -> None:  # noqa: C901
                     f"{page_budget} were requested. Raise the budget or split the run.")
                 page_budget = affordable_pages
 
-        targets: list[str] = []
+        # Page 0 is read from the directory's `.md` twin: it is lighter than the
+        # HTML, carries website and description fields the HTML cards omit, and
+        # is the more reliable endpoint from the platform's shared egress.
+        # Deeper pages have no working `.md` (the `.md` ignores ?page=), so they
+        # fall back to the paginating HTML. Both carry a content marker so a
+        # soft-challenged page escalates through the proxy tiers instead of
+        # parsing to 0 rows.
+        targets: list[dict] = []
         for url in directory_urls:
             for page in range(max_pages):
                 if len(targets) >= page_budget:
                     break
-                targets.append(directory_page_url(url, page))
+                if page == 0:
+                    targets.append({"url": url, "page": 0, "fetch": markdown_url(url),
+                                    "expect": "### [", "kind": "md"})
+                else:
+                    targets.append({"url": url, "page": page,
+                                    "fetch": directory_page_url(url, page),
+                                    "expect": "provider__title-link", "kind": "html"})
 
         await Actor.set_status_message(
             f"Reading {len(targets)} directory page(s) from {len(directory_urls)} URL(s).")
         seen_companies: set[str | None] = set()
+
+        async def fetch_dir_chunk(items: list[dict]) -> list:
+            sem = asyncio.Semaphore(CONCURRENCY)
+
+            async def one(t: dict):
+                async with sem:
+                    return t, await fetcher.fetch(t["fetch"], expect=t["expect"])
+            return await asyncio.gather(*(one(t) for t in items))
 
         for start in range(0, len(targets), CHUNK):
             if stop:
                 break
             chunk = targets[start:start + CHUNK]
             Actor.log.info(f"Chunk {start // CHUNK + 1}: {len(chunk)} directory page(s).")
-            for res in await fetch_many(chunk):
+            for tgt, res in await fetch_dir_chunk(chunk):
                 if stop:
                     break
                 if not res.ok:
-                    await _push_error(res.url, res.error or "the page could not be read")
+                    await _push_error(tgt["url"], res.error or "the page could not be read")
                     continue
-                rows = parse_directory_html(res.text, res.url)
+                rows = (parse_directory_markdown(res.text, tgt["url"]) if tgt["kind"] == "md"
+                        else parse_directory_html(res.text, tgt["url"]))
                 if not rows:
-                    # An empty page is the end of pagination, not a failure.
-                    Actor.log.info("No listings on this page; treating as end of results.")
+                    if tgt["page"] == 0:
+                        # A real category page always lists companies. Zero rows
+                        # on page 0 of a 200 that passed the marker check means
+                        # the layout changed; surface it rather than hide it.
+                        await _push_error(tgt["url"],
+                                          "the directory page returned no companies",
+                                          "EmptyDirectory")
+                    else:
+                        # A later page with nothing is the end of pagination.
+                        Actor.log.info("No listings on this page; treating as end of results.")
                     continue
                 for row in rows:
                     if total >= max_items:
