@@ -142,6 +142,16 @@ class ClutchFetcher:
     timeout: int = TIMEOUT_SECONDS
     max_attempts: int = MAX_ATTEMPTS
     tier_order: tuple[str, ...] = ("direct", "unblocker")
+    # Optional hook (tier, exception_type_name) for operational logging. Never
+    # receives the exception message, which would embed the proxy credentials.
+    on_error: object | None = None
+
+    def _on_error(self, tier: str, exc_name: str) -> None:
+        if self.on_error is not None:
+            try:
+                self.on_error(tier, exc_name)
+            except Exception:  # noqa: BLE001
+                pass
 
     def _tiers(self, start_tier: str | None = None) -> list[tuple[str, str | None]]:
         """Tiers to try, in order. `start_tier` skips the cheaper tiers before it
@@ -181,6 +191,11 @@ class ClutchFetcher:
         last: FetchResult | None = None
         for tier, proxy in self._tiers(start_tier):
             proxies = {"http": proxy, "https": proxy} if proxy else None
+            # Unblocker does its own browser emulation and terminates the TLS
+            # connection itself, so forcing a Chrome-impersonated handshake
+            # THROUGH it breaks the connection. Talk to it as a plain client and
+            # let it do the anti-bot work; only the direct tier impersonates.
+            imp = None if tier == "unblocker" else self.impersonate
             for attempt in range(1, self.max_attempts + 1):
                 # Micro-jitter so bursts never land in lockstep.
                 await asyncio.sleep(random.uniform(0.02, 0.08))
@@ -189,7 +204,7 @@ class ClutchFetcher:
                         resp = await session.get(
                             url,
                             headers=DEFAULT_HEADERS,
-                            impersonate=self.impersonate,
+                            impersonate=imp,
                             proxies=proxies,
                             timeout=self.timeout,
                             # Clutch 301-redirects some paginated paths to their
@@ -218,6 +233,9 @@ class ClutchFetcher:
                         last = FetchResult(url, resp.status_code, "", False, tier, ERR_BLOCKED)
                         break
                 except Exception as exc:
+                    # Log the exception TYPE only (never the message: it embeds
+                    # the proxy URL with credentials). Helps diagnose tier issues.
+                    self._on_error(tier, type(exc).__name__)
                     last = FetchResult(url, 0, "", False, tier, describe_error(exc))
                 await asyncio.sleep(0.4 * attempt)
         return last or FetchResult(url, 0, "", False, "direct", ERR_UNEXPECTED)
@@ -247,4 +265,8 @@ async def build_fetcher(actor, use_proxy_fallback: bool = True) -> ClutchFetcher
                 f"Apify Unblocker proxy is unavailable ({type(exc).__name__}); directory "
                 "pages will use a direct connection and may be rate limited on some categories.")
     actor.log.info(f"Fetcher tiers provisioned: {list(tiers)}")
-    return ClutchFetcher(proxy_urls=tiers)
+
+    def _log_err(tier: str, exc_name: str) -> None:
+        actor.log.info(f"fetch error on tier={tier}: {exc_name}")
+
+    return ClutchFetcher(proxy_urls=tiers, on_error=_log_err)
