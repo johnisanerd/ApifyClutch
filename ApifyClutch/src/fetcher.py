@@ -240,10 +240,11 @@ async def build_fetcher(actor, use_proxy_fallback: bool = True) -> ClutchFetcher
                 url = await cfg.new_url()
                 if url:
                     tiers["unblocker"] = url
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
             # No Unblocker entitlement degrades to direct rather than crashing;
             # directory mode will still run, just without the escalation tier.
             actor.log.warning(
-                "Apify Unblocker proxy is unavailable; directory pages will use a "
-                "direct connection and may be rate limited on some categories.")
+                f"Apify Unblocker proxy is unavailable ({type(exc).__name__}); directory "
+                "pages will use a direct connection and may be rate limited on some categories.")
+    actor.log.info(f"Fetcher tiers provisioned: {list(tiers)}")
     return ClutchFetcher(proxy_urls=tiers)

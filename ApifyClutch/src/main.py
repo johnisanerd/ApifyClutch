@@ -289,12 +289,20 @@ async def _run() -> None:  # noqa: C901
                 break
             chunk = targets[start:start + CHUNK]
             Actor.log.info(f"Chunk {start // CHUNK + 1}: {len(chunk)} directory page(s).")
-            for tgt, res in await fetch_dir_chunk(chunk):
+            fetched = await fetch_dir_chunk(chunk)
+            for tgt, res in fetched:
                 if stop:
                     break
                 if isinstance(res, BaseException):
-                    Actor.log.warning(f"Directory page fetch raised: {type(res).__name__}")
+                    Actor.log.warning(
+                        f"Directory page fetch raised: {type(res).__name__}: {res}")
                     await _push_error(tgt["url"], "the page could not be read")
+                    continue
+                Actor.log.info(
+                    f"page {tgt['page']} kind={tgt['kind']} ok={res.ok} tier={res.tier} "
+                    f"status={res.status} bytes={len(res.text or '')} err={res.error}")
+                if not res.ok:
+                    await _push_error(tgt["url"], res.error or "the page could not be read")
                     continue
                 if not res.ok:
                     await _push_error(tgt["url"], res.error or "the page could not be read")
@@ -462,6 +470,15 @@ async def main() -> None:
     async with Actor:
         try:
             await _run()
+        except Exception:  # noqa: BLE001
+            # A raised _run() must not exit silently with 0 rows. Log the full
+            # traceback and surface an error row so the failure is visible.
+            import traceback
+            Actor.log.error(f"Run failed: {traceback.format_exc()}")
+            try:
+                await _push_error("run", "the run failed unexpectedly", "RunError")
+            except Exception:  # noqa: BLE001
+                pass
         finally:
             if _guard is not None:
                 await _guard.close()
