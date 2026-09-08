@@ -510,6 +510,13 @@ async def _run() -> None:  # noqa: C901
                         stop = True
                         break
 
+    # Emit the final count as a real log line. `set_status_message` sets the run's
+    # status message, which is NOT part of the log stream, and the dataset
+    # itemCount metadata is eventually-consistent (reads 0 for seconds after a run
+    # finishes). Neither is a reliable post-run ground truth, so a run-summary log
+    # line is the thing to read when judging output. (2026-09-08: the lagging
+    # itemCount once looked like a profiles/search reliability bug that was not real.)
+    Actor.log.info(f"Run complete: {total} row(s) collected.")
     # The guard sets its own terminal message when the allowance is spent; only
     # overwrite it otherwise.
     if _guard is None or not _guard.exhausted:

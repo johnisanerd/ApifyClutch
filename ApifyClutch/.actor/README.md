@@ -160,6 +160,18 @@ Google Sheets, or a vector store, or let an agent call it over MCP.
 
 More at [Alpha OSINT](https://www.alphaosint.com).
 
+## 📋 Featured tasks
+
+Ready-to-run examples. Each is a saved configuration you can open and run in one click, or duplicate with your own URLs or query:
+
+- [Export Digital Marketing Agencies from Clutch](https://apify.com/johnvc/clutch-agency-api/examples/export-a-list-of-digital-marketing-agencies-from-clutch?fpr=9n7kx3): one row per agency with rating, reviews, budget band, hourly rate, team size, and website.
+- [Find Shopify Development Agencies on Clutch](https://apify.com/johnvc/clutch-agency-api/examples/find-shopify-development-agencies-on-clutch?fpr=9n7kx3): keyword search for Shopify agencies, each returned as a structured company row.
+- [Clutch Company Data API as JSON for Your CRM](https://apify.com/johnvc/clutch-agency-api/examples/get-clutch-company-data-as-json-for-your-crm?fpr=9n7kx3): full company profiles as flat JSON, ready to map onto CRM fields.
+- [Clutch Agency Data as LLM-Ready Markdown for RAG](https://apify.com/johnvc/clutch-agency-api/examples/clutch-agency-data-as-llm-ready-markdown-for-rag?fpr=9n7kx3): company profiles as clean markdown plus JSON, ready for a vector store.
+- [Monitor a Clutch Company's Client Reviews](https://apify.com/johnvc/clutch-agency-api/examples/monitor-a-clutch-companys-client-reviews?fpr=9n7kx3): every verified client review as its own row, with the full rating breakdown.
+- [从 Clutch 导出数字营销机构列表](https://apify.com/johnvc/clutch-agency-api/examples/clutch-marketing-agency-list-cn?fpr=9n7kx3): Simplified Chinese page for exporting digital marketing agencies from a Clutch directory as JSON.
+- [Clutch 公司资料与客户评价 API](https://apify.com/johnvc/clutch-agency-api/examples/clutch-company-profiles-reviews-cn?fpr=9n7kx3): Simplified Chinese page for full company profiles with verified client reviews as JSON.
+
 ## ❓ FAQ
 
 **Do I need a Clutch account or API key?**

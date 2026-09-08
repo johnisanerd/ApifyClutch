@@ -59,6 +59,33 @@ Rejected earlier: BrightData Web Unlocker at ~$0.0015/request. It adds a
 vendor-leak surface, and there is no maintained BrightData dataset for Clutch.
 Apify Unblocker is the first-party equivalent with none of that.
 
+### CORRECTION 2026-09-08: "profiles/search intermittently return 0" was a measurement artifact
+
+After the Unblocker + v4 + free-tier deploy (build 1.0.19), repeated task sweeps
+appeared to show profiles/search modes returning 0 rows at random (directory
+looked reliable, profiles/search did not). **This was false.** Root cause: the
+sweep read the dataset's `itemCount` **metadata** field immediately after the run
+finished, and that field is **eventually-consistent** — it lags at 0 for several
+seconds before catching up. Reading the actual `/datasets/{id}/items` array
+instead showed every run had its full row set the whole time.
+
+Proof (build 1.0.19, `rag-prof` task, 4 back-to-back runs): each run fetched both
+profiles with **full bodies** (`ok=True status=200 bytes=253141` / `172387`) and
+had **2 real items**, while `itemCount` metadata read `0, 2, 0, 2`. A clean
+3x sweep of all 7 tasks reading the items array: `mktr-dir 50/50/50`,
+`dev-prof 3/3/3`, `rag-prof 2/2/2`, `monitor 21/21/21`, `search 4/4/4`,
+`zh-dir 50/50/50`, `zh-prof 21/21/21`. **The actor is reliable in every mode.**
+
+Why directory *looked* fine while profiles/search *looked* broken: directory mode
+logs `rows=N` via `Actor.log.info` (a real log line, read correctly), so its
+counts were never taken from the lagging metadata. Profiles/search had no
+equivalent summary log line, so the checker fell back to `itemCount`. **Lesson:
+to judge run output, read the items array (or the run log), never the
+eventually-consistent `itemCount` right after finish.** The `directory` best-of-N
+retry is still correct and useful (Clutch really does serve partial heavy pages),
+but no best-of-N was ever needed on the light profile/search `.md` pages — they
+come back complete on the first Unblocker fetch.
+
 ## The markdown layer (the product)
 
 Clutch publishes a native markdown rendering for AI agents: `/profile/{slug}.md`,
