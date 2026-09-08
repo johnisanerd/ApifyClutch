@@ -110,7 +110,7 @@ async def _charge(event_name: str, count: int = 1) -> bool:
     if _guard is not None:
         return await _guard.charge(event_name, count)
     try:
-        result = await Actor.charge(event_name, count)
+        result = await Actor.charge(event_name, count=count)
         return bool(getattr(result, "event_charge_limit_reached", False))
     except Exception as e:  # noqa: BLE001
         Actor.log.warning(f"Failed to charge '{event_name}' x{count}: {e}")
