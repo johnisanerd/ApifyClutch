@@ -75,6 +75,15 @@ LISTINGS_PER_PAGE = 90
 
 CHUNK = 10                   # targets per chunk: push+charge before fetching more
 CONCURRENCY = 5              # parallel fetches inside one chunk
+# Clutch serves directory pages with variable completeness even through the
+# Unblocker proxy: the same category can come back with 50 companies or a partial
+# 9. A partial page still contains the listing marker, so the fetcher cannot
+# reject it. Defence: fetch a directory page up to DIR_MAX_TRIES times (Unblocker
+# rotates IP each time) and keep the fullest result; stop early once a page looks
+# complete (a full page-0 is ~50, so DIR_FULL_ROWS trades a little cost for
+# reliability). Genuinely small categories just return their stable max.
+DIR_FULL_ROWS = 45
+DIR_MAX_TRIES = 3
 
 
 def _now() -> str:
@@ -271,44 +280,60 @@ async def _run() -> None:  # noqa: C901
             f"Reading {len(targets)} directory page(s) from {len(directory_urls)} URL(s).")
         seen_companies: set[str | None] = set()
 
+        def _parse_dir(text: str, tgt: dict) -> list:
+            return (parse_directory_markdown(text, tgt["url"]) if tgt["kind"] == "md"
+                    else parse_directory_html(text, tgt["url"]))
+
         async def fetch_dir_chunk(items: list[dict]) -> list:
             sem = asyncio.Semaphore(CONCURRENCY)
 
             async def one(t: dict):
+                # Best-of-N: fetch up to DIR_MAX_TRIES times and keep the fullest
+                # parse. Clutch returns partial pages at random even through
+                # Unblocker; a fresh IP per retry usually yields the full page.
                 async with sem:
-                    return await fetcher.fetch(
-                        t["fetch"], expect=t["expect"], start_tier="unblocker")
+                    best_rows: list = []
+                    best_res = None
+                    for _ in range(DIR_MAX_TRIES):
+                        res = await fetcher.fetch(
+                            t["fetch"], expect=t["expect"], start_tier="unblocker")
+                        if not res.ok:
+                            best_res = best_res or res
+                            continue
+                        rows = _parse_dir(res.text, t)
+                        if len(rows) > len(best_rows):
+                            best_rows, best_res = rows, res
+                        if len(rows) >= DIR_FULL_ROWS:
+                            break
+                    return t, best_res, best_rows
+
             # return_exceptions=True: a raised fetch must never bubble out and
             # abort the whole run silently (the /developers 0-row silent exit).
-            results = await asyncio.gather(
+            return await asyncio.gather(
                 *(one(t) for t in items), return_exceptions=True)
-            return list(zip(items, results))
 
         for start in range(0, len(targets), CHUNK):
             if stop:
                 break
             chunk = targets[start:start + CHUNK]
             Actor.log.info(f"Chunk {start // CHUNK + 1}: {len(chunk)} directory page(s).")
-            fetched = await fetch_dir_chunk(chunk)
-            for tgt, res in fetched:
+            for item in await fetch_dir_chunk(chunk):
                 if stop:
                     break
-                if isinstance(res, BaseException):
+                if isinstance(item, BaseException):
                     Actor.log.warning(
-                        f"Directory page fetch raised: {type(res).__name__}: {res}")
-                    await _push_error(tgt["url"], "the page could not be read")
+                        f"Directory page fetch raised: {type(item).__name__}: {item}")
+                    await _push_error("directory", "the page could not be read")
                     continue
+                tgt, res, rows = item
                 Actor.log.info(
-                    f"page {tgt['page']} kind={tgt['kind']} ok={res.ok} tier={res.tier} "
-                    f"status={res.status} bytes={len(res.text or '')} err={res.error}")
-                if not res.ok:
-                    await _push_error(tgt["url"], res.error or "the page could not be read")
+                    f"page {tgt['page']} kind={tgt['kind']} "
+                    f"ok={res.ok if res else False} tier={res.tier if res else '-'} "
+                    f"rows={len(rows)}")
+                if res is None or not res.ok:
+                    await _push_error(
+                        tgt["url"], (res.error if res else None) or "the page could not be read")
                     continue
-                if not res.ok:
-                    await _push_error(tgt["url"], res.error or "the page could not be read")
-                    continue
-                rows = (parse_directory_markdown(res.text, tgt["url"]) if tgt["kind"] == "md"
-                        else parse_directory_html(res.text, tgt["url"]))
                 if not rows:
                     if tgt["page"] == 0:
                         # A real category page always lists companies. Zero rows
