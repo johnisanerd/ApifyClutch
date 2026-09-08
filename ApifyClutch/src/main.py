@@ -230,14 +230,27 @@ async def _run() -> None:  # noqa: C901
     total = 0
     stop = False
 
-    async def fetch_many(urls: list[str]) -> list:
-        """Fetch a chunk concurrently, preserving input order."""
+    async def fetch_many(urls: list[str], expect: str | None = None) -> list:
+        """Fetch a chunk concurrently, preserving input order.
+
+        Every fetch goes through Unblocker (the platform's datacenter egress
+        soft-challenges even the light `.md` pages intermittently), with one
+        retry through a fresh Unblocker IP on failure. Returns FetchResults or,
+        for a fetch that raised, the exception (return_exceptions), so the caller
+        never aborts the whole run silently.
+        """
         sem = asyncio.Semaphore(CONCURRENCY)
 
         async def one(u: str):
             async with sem:
-                return await fetcher.fetch(u)
-        return await asyncio.gather(*(one(u) for u in urls))
+                last = None
+                for _ in range(2):
+                    res = await fetcher.fetch(u, expect=expect, start_tier="unblocker")
+                    if res.ok:
+                        return res
+                    last = res
+                return last
+        return await asyncio.gather(*(one(u) for u in urls), return_exceptions=True)
 
     # ------------------------------------------------------------------
     # directory mode
@@ -372,9 +385,9 @@ async def _run() -> None:  # noqa: C901
         if mode == "search":
             await Actor.set_status_message(f"Searching {len(queries)} query/queries.")
             found: list[str] = []
-            for res in await fetch_many([search_url(q) for q in queries]):
-                if not res.ok:
-                    await _push_error(res.url, res.error or "the search page could not be read")
+            for res in await fetch_many([search_url(q) for q in queries], expect="/profile/"):
+                if isinstance(res, BaseException) or res is None or not res.ok:
+                    await _push_error("search", "the search page could not be read")
                     continue
                 found.extend(parse_search_html(res.text))
             # De-duplicate while preserving discovery order.
@@ -401,13 +414,18 @@ async def _run() -> None:  # noqa: C901
                 break
             chunk = targets[start:start + CHUNK]
             Actor.log.info(f"Chunk {start // CHUNK + 1}: {len(chunk)} profile(s).")
-            results = await fetch_many([markdown_url(u) for u in chunk])
+            results = await fetch_many(
+                [markdown_url(u) for u in chunk], expect="Pricing, Services")
 
             for profile_url, res in zip(chunk, results):
                 if stop:
                     break
-                if not res.ok:
-                    await _push_error(profile_url, res.error or "the profile could not be read")
+                if isinstance(res, BaseException) or res is None or not res.ok:
+                    Actor.log.info(f"profile fetch failed: {profile_url}")
+                    await _push_error(
+                        profile_url,
+                        (res.error if res and not isinstance(res, BaseException) else None)
+                        or "the profile could not be read")
                     continue
 
                 row = parse_profile_markdown(res.text, profile_url)
@@ -415,7 +433,7 @@ async def _run() -> None:  # noqa: C901
 
                 # Raw HTML is a second request, so it is opt-in only.
                 if "html" in formats:
-                    html_res = await fetcher.fetch(profile_url)
+                    html_res = await fetcher.fetch(profile_url, start_tier="unblocker")
                     if html_res.ok:
                         row["html"] = html_res.text
                         # JSON-LD carries phone and a full postal address, which
@@ -452,7 +470,8 @@ async def _run() -> None:  # noqa: C901
                 page = 2
                 while (len(collected) < max_reviews and len(collected) < declared
                        and page <= MAX_PAGES_PER_DIRECTORY and not stop):
-                    r = await fetcher.fetch(review_page_url(profile_url, page))
+                    r = await fetcher.fetch(
+                        review_page_url(profile_url, page), start_tier="unblocker")
                     if not r.ok:
                         await _push_error(profile_url, r.error or "a review page could not be read")
                         break
