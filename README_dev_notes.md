@@ -178,3 +178,131 @@ is $0.0104; ours is $0.0055 for the same data plus markdown.
 
 `.actor/actor.json` mirrors the BRONZE tier and is in sync. Ledger:
 `ApifyUpdate/pricing_changes.json` + `PRICING_LEDGER.md`.
+
+## Launch status and distribution chain (2026-09-08)
+
+Fast reference for the whole launch. IDs and URLs first, then what shipped, then
+the operational gotchas that cost a cycle each.
+
+### Identity
+
+| Thing | Value |
+|---|---|
+| Actor slug | `johnvc/clutch-agency-api` |
+| Actor id | `JYnIiqxn4hMnWZiKQ` |
+| Source repo | `github.com/johnisanerd/ApifyClutch` (double-nested: build folder is `ApifyClutch/ApifyClutch`) |
+| Git deploy | git-linked auto-publish. **Deploy only via `git push`, never `apify push`** (Rule #3; early 1.0.1-1.0.6 builds broke this before the repo was linked). Always verify `HEAD == origin/main` after a push. |
+| Example repo | `github.com/johnisanerd/Apify-Clutch-Agency-API` (public) |
+| AlphaOSINT page | `website-alphaosint/_sources/clutch-agency-api.md` (live) |
+| Commit convention | authored `John Cole <29712567+johnisanerd@users.noreply.github.com>`, **no Claude attribution / Co-Authored-By trailer** (matches the repo history; overrides the global default) |
+
+### Build history
+
+- **1.0.19** — Unblocker split-routing + SDK v4 (`apify==4.0.2`, `apify-client==3.2.0`, `apify-shared` dropped) + free-tier cap + profiles/search diagnostics.
+- **1.0.20** — added the terminal `Actor.log.info("Run complete: N row(s) collected.")` line (see below) and the Featured tasks README section.
+- **1.0.21** — doc-only: the Agent skills backlink section in the actor README. `README_dev_notes.md` and `tasks/` live at the repo ROOT, outside the `ApifyClutch/ApifyClutch` build folder, so editing them does not change the actor image.
+
+SDK v4 was a **pin-only** migration: no `src/*.py` changes, `origin_compat.py` still required (the released `apify-shared` still lacks MCP in `MetaOrigin`, so the Rule #30 shim does real work under v4). Default run options that the Console does not inherit from `actor.json`: build=latest, memory 128 MB, timeout 600 s. Re-apply them if a push ever resets them.
+
+### Free-tier cap
+
+Shared per-actor monthly cap for free users (`FreeTierGuard`, Supabase-backed).
+Wired in `src/main.py`: import, `FreeTierGuard.start()` after input validation
+and before any fetch, `_guard.charge` on every charge site, `close()` in
+`finally`. `FREE_MAX=$1.00`, **not marked secret** (a secret var redacts to
+`$*********`, which the guard cannot parse, so it would silently read 0 and go
+inert). Cap installed **2026-09-04**; `prune_stale_builds.py --actor
+JYnIiqxn4hMnWZiKQ` reports **0 stale builds** (every surviving build is post-cap),
+so the pre-cap-bypass gap is closed. A paid run logs "Paid Apify account detected"
+and the guard no-ops.
+
+### Charging (verified on-platform)
+
+`chargedEventCounts` maps correctly per mode: directory run -> `listing-scraped`
+N; profiles run -> `profile-scraped` N; monitor run -> `profile-scraped` 1 +
+`review-scraped` M. Run-level dedup by profile URL holds (a repeated company is
+billed once). Measured all-in cost: a 50-row directory run ~$0.0007 total
+(~$0.000014/row) via Unblocker, ~13x under the listing net price. Profiles/reviews
+COGS trivial.
+
+### Task pages (7 published 2026-09-08)
+
+Published by REST `PUT /v2/actor-tasks/{id}` with `isPublic:true` + `publicConfig`
+(`seoTitle` <=60, `seoDescription` <=160, `inputSchemaFields`, `datasetView`).
+**Publish requires a task-level `title` AND `description`** or it 400s with
+"Cannot publish Actor task: Description is required" (house pattern: set
+`title`=`seoTitle`, `description`=`seoDescription`). Verify with the
+`/examples/{slug}.md` page returning 200 (NOT `/{slug}` and NOT `/{slug}.md`,
+which both just serve the actor SPA shell). Registered in `ApifyUpdate/tasks.json`
++ Featured tasks README (Rule #25) + `tasks/TASK-*.md` sheets.
+
+| Task id | Slug | Mode | Bucket |
+|---|---|---|---|
+| `64gy310cSD6m4kUzG` | export-a-list-of-digital-marketing-agencies-from-clutch | directory | Marketer |
+| `AOvoKnTtrTXs2U2YV` | get-clutch-company-data-as-json-for-your-crm | profiles | Developer |
+| `JT1pnISksF9PBWCkL` | clutch-agency-data-as-llm-ready-markdown-for-rag | profiles | AI/RAG |
+| `YyE61CsaLhf26oNV1` | monitor-a-clutch-companys-client-reviews | profiles+reviews | Monitor |
+| `jnQPaxhJwGWC5o6NW` | find-shopify-development-agencies-on-clutch | search | Search |
+| `sBBT5RtyU6bPQRRnj` | clutch-marketing-agency-list-cn | directory | zh-Hans (Rule #18) |
+| `aVTHziIj11sSgki5l` | clutch-company-profiles-reviews-cn | profiles+reviews | zh-Hans (Rule #18) |
+
+5 distinct English intent buckets + 2 Simplified-Chinese pages clears the Rule #26
+diversity floor.
+
+### Agent skills (2 published 2026-09-08)
+
+Keyword pair from `KEYWORDS-clutch-agency-api-2026-08-25.md`: `company data api`
+(WINNABLE, best; profiles mode) and `marketing agency database` (WINNABLE;
+directory mode). Built with the `apify-publish-agent-skills` workflow.
+
+- Canonical: `ApifyUpdate/agent-skills/clutch-agency-api/apify-{company-data-api,marketing-agency-database}` (`fp_sid=skillrepo`).
+- Public repos (P1-P3, `npx skills add` telemetry run): `johnisanerd/claude-skill-company-data-api`, `johnisanerd/claude-skill-marketing-agency-database`.
+- awesome-skills PRs (P4, one skill per PR): `apify/awesome-skills#106` (company-data-api), `#107` (marketing-agency-database), `fp_sid=awesomeskills`, awaiting maintainer merge.
+- MCP registry (P5, published + confirmed live): `io.github.johnisanerd/clutch-agency-api` v1.0.0, hosted `mcp.apify.com` remote, via `mcp-publisher` (`server.json` under `agent-skills/clutch-agency-api/syndication/tier4-mcp-registry/`). Glama/mcp.so/PulseMCP inherit from the registry.
+- Ledger: `ApifyUpdate/skills_published.json`. Actor README carries an Agent skills backlink to both repos.
+
+### MCP discovery (Rule #14) and competitive landscape
+
+Does **not** rank top-5 for "clutch" or "clutch agency" (new actor, ~0 usage;
+rank ~= title-keyword x popularity). The niche is now **saturated: 13+ rivals**.
+Only `danthedataman/clutch-agency-directory` has real traction (~12 monthly);
+memo23 (818 users, quality leader, $0.0029/company) and crawlerbros (1347 users,
+broken incumbent) hold the installed base; the rest (`dami_studio`, `psymall`,
+`khadinakbar`, `happitap`, `saswave`, `powerai`, `automation-lab`, `samstorm`,
+`jungle_synthesizer`) are mostly pre-flywheel. We are the price floor on
+directory/listing rows and the only one with multi-format markdown + a real
+reviews-pagination mode. Win path = usage flywheel from the task pages.
+
+### Operational gotchas learned this launch (each cost a cycle)
+
+1. **Dataset `itemCount` metadata is eventually-consistent.** It reads 0 for
+   seconds after a run finishes. Judging output by it produced a phantom
+   "profiles/search return 0 rows" bug that was never real (see the CORRECTION
+   2026-09-08 section above). Read the `/datasets/{id}/items` array or a run-log
+   summary line instead. This is why the terminal `Run complete: N row(s)` log
+   line was added: `set_status_message` sets the run status message, which is NOT
+   in the log stream, so there was no log-readable ground truth for the light
+   modes.
+2. **Task publish needs `title` + `description`,** not just `publicConfig`
+   (400 "Description is required"). Verify via `/examples/{slug}.md` = 200.
+3. **awesome-skills `generate_agents.py` requires `metadata.keywords`** in the
+   SKILL.md frontmatter (comma-separated string). The bundled `validate.sh` does
+   NOT check it, so a skill passes local validation then fails the PR gate. Put
+   `metadata.keywords` in the canonical SKILL.md from the start so all copies match.
+4. **MCP `server.json`:** `description` must be <=100 chars (a longer one 422s),
+   use the current `2025-12-11` schema, `remotes` for the hosted mcp.apify.com
+   server (no npm publish). `mcp-publisher login github` is a device flow; once
+   authed, `token.json` in `~/.config/mcp-publisher` lets `publish` run.
+5. **awesome-skills fork name:** the single `johnisanerd` fork of
+   `apify/awesome-skills` was renamed (`awesome-skills-zillow-price-cuts` from a
+   prior launch); the local clone's `origin` redirects to it. Branch per skill
+   from `upstream/main`, stage only the 4 PR files (SKILL.md + 2 references + the
+   one `marketplace.json` entry); revert the regenerated `README.md` and
+   `agents/AGENTS.md` before committing.
+
+### Remaining launch chain
+
+Shipped: actor, pricing, README SEO, 7 tasks, example repo, AlphaOSINT page,
+cross-link tokens, monthly keep-alive schedules, 2 agent skills (repos + MCP
+registry + PRs open). **Still to do:** n8n node, long-form articles, low-priority
+P6 skill-directory submissions. Hide-source confirmed checked by John (Rule #31).
