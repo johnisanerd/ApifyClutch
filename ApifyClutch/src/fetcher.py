@@ -192,10 +192,14 @@ class ClutchFetcher:
         for tier, proxy in self._tiers(start_tier):
             proxies = {"http": proxy, "https": proxy} if proxy else None
             # Unblocker does its own browser emulation and terminates the TLS
-            # connection itself, so forcing a Chrome-impersonated handshake
-            # THROUGH it breaks the connection. Talk to it as a plain client and
-            # let it do the anti-bot work; only the direct tier impersonates.
-            imp = None if tier == "unblocker" else self.impersonate
+            # connection itself (a MITM that presents its own certificate), so:
+            # (a) forcing a Chrome-impersonated handshake through it breaks the
+            # connection, and (b) its cert does not chain to a public CA. So the
+            # unblocker tier talks as a plain client (no impersonation) and skips
+            # cert verification; only the direct tier impersonates and verifies.
+            is_unblocker = tier == "unblocker"
+            imp = None if is_unblocker else self.impersonate
+            verify = not is_unblocker
             for attempt in range(1, self.max_attempts + 1):
                 # Micro-jitter so bursts never land in lockstep.
                 await asyncio.sleep(random.uniform(0.02, 0.08))
@@ -206,6 +210,7 @@ class ClutchFetcher:
                             headers=DEFAULT_HEADERS,
                             impersonate=imp,
                             proxies=proxies,
+                            verify=verify,
                             timeout=self.timeout,
                             # Clutch 301-redirects some paginated paths to their
                             # canonical form, so redirects are followed. A 3xx
