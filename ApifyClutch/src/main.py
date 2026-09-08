@@ -416,10 +416,16 @@ async def _run() -> None:  # noqa: C901
             Actor.log.info(f"Chunk {start // CHUNK + 1}: {len(chunk)} profile(s).")
             results = await fetch_many(
                 [markdown_url(u) for u in chunk], expect="Pricing, Services")
+            Actor.log.info(f"profile chunk returned {len(results)} result(s)")
 
             for profile_url, res in zip(chunk, results):
                 if stop:
                     break
+                Actor.log.info(
+                    f"profile {profile_url.rsplit('/', 1)[-1]}: "
+                    f"exc={isinstance(res, BaseException)} "
+                    f"ok={getattr(res, 'ok', None)} tier={getattr(res, 'tier', '-')} "
+                    f"status={getattr(res, 'status', '-')} bytes={len(getattr(res, 'text', '') or '')}")
                 if isinstance(res, BaseException) or res is None or not res.ok:
                     Actor.log.info(f"profile fetch failed: {profile_url}")
                     await _push_error(
