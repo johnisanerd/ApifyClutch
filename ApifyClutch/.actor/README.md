@@ -172,6 +172,13 @@ Ready-to-run examples. Each is a saved configuration you can open and run in one
 - [从 Clutch 导出数字营销机构列表](https://apify.com/johnvc/clutch-agency-api/examples/clutch-marketing-agency-list-cn?fpr=9n7kx3): Simplified Chinese page for exporting digital marketing agencies from a Clutch directory as JSON.
 - [Clutch 公司资料与客户评价 API](https://apify.com/johnvc/clutch-agency-api/examples/clutch-company-profiles-reviews-cn?fpr=9n7kx3): Simplified Chinese page for full company profiles with verified client reviews as JSON.
 
+## 🧩 Agent skills
+
+Ready-made Claude and agent skills that wrap this Actor around one outcome. Install with `npx skills add <repo>`, or use them over MCP:
+
+- [claude-skill-company-data-api](https://github.com/johnisanerd/claude-skill-company-data-api): pull structured company records from Clutch profiles for CRM enrichment.
+- [claude-skill-marketing-agency-database](https://github.com/johnisanerd/claude-skill-marketing-agency-database): build a marketing agency database from any Clutch directory.
+
 ## ❓ FAQ
 
 **Do I need a Clutch account or API key?**
