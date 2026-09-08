@@ -281,6 +281,25 @@ check("mentioning cf-mitigated in the body is not a challenge",
 
 
 # ---------------------------------------------------------------------------
+# 9. Tier routing: directory starts at Unblocker, profiles start direct, and a
+#    missing Unblocker entitlement degrades to direct rather than nothing.
+# ---------------------------------------------------------------------------
+both = F.ClutchFetcher(proxy_urls={"direct": None, "unblocker": "http://px"})
+check("default order is direct then unblocker",
+      [t for t, _ in both._tiers()] == ["direct", "unblocker"])
+check("directory start_tier=unblocker skips direct",
+      [t for t, _ in both._tiers("unblocker")] == ["unblocker"])
+check("unknown start_tier is ignored",
+      [t for t, _ in both._tiers("bogus")] == ["direct", "unblocker"])
+
+direct_only = F.ClutchFetcher(proxy_urls={"direct": None})
+check("no-entitlement default is direct only",
+      [t for t, _ in direct_only._tiers()] == ["direct"])
+check("no-entitlement start_tier=unblocker degrades to direct, not empty",
+      [t for t, _ in direct_only._tiers("unblocker")] == ["direct"])
+
+
+# ---------------------------------------------------------------------------
 print(f"ran {checks} checks")
 if failures:
     print(f"FAIL: {len(failures)} check(s) failed:")

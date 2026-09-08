@@ -5,17 +5,21 @@ client is refused with `403` and `cf-mitigated: challenge` even on `robots.txt`.
 What clears it is the TLS/HTTP2 handshake, not the originating address.
 
 Measured 2026-08-20, 150 distinct profile pages fetched back-to-back with
-`curl_cffi` impersonating Chrome and **no proxy at all**: 0 challenges, 100%
-valid responses, 0.12s median latency. That is the same finding
-`ApifyMapsPlaceContacts` recorded against Google (fingerprint matters, address
-does not), and the same client `ApifyWellfoundJobs` already runs against
-Cloudflare in production.
+`curl_cffi` impersonating Chrome and no proxy: 0 challenges, 100% valid
+responses, 0.12s median latency. IMPORTANT: that run was from a residential IP,
+not the platform. The light `.md` profile/search pages stay reliable direct on
+the platform too, but the heavy directory pages (1.2 to 2.7 MB HTML/md) get a
+Cloudflare **soft challenge** from the platform's shared datacenter egress: a 200
+with a partial or empty body and no `cf-mitigated` header (found 2026-09-07).
 
-So the default tier is a direct connection. A proxy ladder remains as a fallback
-for the case where Clutch tightens up, but it is deliberately NOT exposed in the
-input schema: under pay-per-event the platform bills the developer, so a visible
-residential toggle would let a caller spend roughly ten times the bandwidth at
-no cost to themselves and gain nothing measurable.
+So the routing is split. Profile and search fetches go **direct** and escalate
+to Unblocker only on a real challenge. Directory fetches start at **Unblocker**
+(`start_tier="unblocker"`), Apify's first-party anti-bot proxy, billed per
+successful request; at that per-request rate a heavy directory page is cheap
+enough to keep the listing margin. Residential ($8/GB on multi-MB pages) was
+rejected as a margin-killer. No proxy toggle is exposed in the input schema:
+under pay-per-event the platform bills the developer, so a visible toggle would
+let a caller spend on the developer's account for nothing.
 
 Error-text discipline: HTTP client exceptions embed the full request URL, so a
 raw `str(exc)` reaching a log line or a dataset row would publish internal
@@ -124,21 +128,41 @@ class FetchResult:
 
 @dataclass
 class ClutchFetcher:
-    """Fetches Clutch pages, escalating tiers only if a challenge appears.
+    """Fetches Clutch pages, escalating tiers when a page comes back challenged.
 
-    `proxy_urls` maps a tier name to a proxy URL. The default is a single
-    "direct" tier with no proxy, which Phase 0 measured at a 0% challenge rate.
+    `proxy_urls` maps a tier name to a proxy URL. Phase 0 measured a 0% challenge
+    rate with no proxy, but that was from a residential IP; on the platform's
+    datacenter egress Clutch soft-challenges the heavy directory pages. So the
+    profile/search path stays "direct" (light `.md` pages, reliable) and only
+    escalates to "unblocker" on a real challenge, while directory mode starts at
+    "unblocker" (via `start_tier`), Apify's first-party anti-bot proxy.
     """
     proxy_urls: dict[str, str | None] = field(default_factory=lambda: {"direct": None})
     impersonate: str = IMPERSONATE
     timeout: int = TIMEOUT_SECONDS
     max_attempts: int = MAX_ATTEMPTS
-    tier_order: tuple[str, ...] = ("direct", "datacenter", "residential")
+    tier_order: tuple[str, ...] = ("direct", "unblocker")
 
-    def _tiers(self) -> list[tuple[str, str | None]]:
-        return [(t, self.proxy_urls[t]) for t in self.tier_order if t in self.proxy_urls]
+    def _tiers(self, start_tier: str | None = None) -> list[tuple[str, str | None]]:
+        """Tiers to try, in order. `start_tier` skips the cheaper tiers before it
+        (directory mode passes "unblocker" so it never wastes a flaky direct hit).
 
-    async def fetch(self, url: str, expect: str | None = None) -> FetchResult:
+        If the requested start tier is not provisioned (no Unblocker entitlement),
+        degrade to whatever tiers exist rather than returning nothing, so the run
+        still executes on the direct tier instead of erroring out.
+        """
+        order = self.tier_order
+        if start_tier is not None and start_tier in order:
+            order = order[order.index(start_tier):]
+        tiers = [(t, self.proxy_urls[t]) for t in order if t in self.proxy_urls]
+        if not tiers:
+            tiers = [(t, self.proxy_urls[t]) for t in self.tier_order
+                     if t in self.proxy_urls]
+        return tiers
+
+    async def fetch(
+        self, url: str, expect: str | None = None, start_tier: str | None = None
+    ) -> FetchResult:
         """Fetch one URL. Returns a FetchResult; never raises for HTTP problems.
 
         `expect`, when given, is a substring that a genuine full response must
@@ -155,7 +179,7 @@ class ClutchFetcher:
         from curl_cffi.requests import AsyncSession
 
         last: FetchResult | None = None
-        for tier, proxy in self._tiers():
+        for tier, proxy in self._tiers(start_tier):
             proxies = {"http": proxy, "https": proxy} if proxy else None
             for attempt in range(1, self.max_attempts + 1):
                 # Micro-jitter so bursts never land in lockstep.
@@ -200,22 +224,26 @@ class ClutchFetcher:
 
 
 async def build_fetcher(actor, use_proxy_fallback: bool = True) -> ClutchFetcher:
-    """Construct a fetcher with a direct tier plus platform proxy fallbacks.
+    """Construct a fetcher with a direct tier plus Apify's Unblocker.
 
-    Proxy credentials come from the platform at run time; there is no vendor
-    API key anywhere in this actor.
+    Unblocker (`groups=['UNBLOCKER']`) is Apify's first-party anti-bot proxy,
+    billed per successful request. It handles the Cloudflare soft-challenge that
+    the platform's shared datacenter egress trips on the heavy directory pages.
+    Proxy credentials come from the platform at run time; there is no third-party
+    vendor and no API key anywhere in this actor.
     """
     tiers: dict[str, str | None] = {"direct": None}
     if use_proxy_fallback:
-        for tier, groups in (("datacenter", None), ("residential", ["RESIDENTIAL"])):
-            try:
-                cfg = await actor.create_proxy_configuration(groups=groups)
-                if cfg:
-                    url = await cfg.new_url()
-                    if url:
-                        tiers[tier] = url
-            except Exception:
-                # No proxy entitlement is not an error: the direct tier is the
-                # measured default and carries the run on its own.
-                continue
+        try:
+            cfg = await actor.create_proxy_configuration(groups=["UNBLOCKER"])
+            if cfg:
+                url = await cfg.new_url()
+                if url:
+                    tiers["unblocker"] = url
+        except Exception:  # noqa: BLE001
+            # No Unblocker entitlement degrades to direct rather than crashing;
+            # directory mode will still run, just without the escalation tier.
+            actor.log.warning(
+                "Apify Unblocker proxy is unavailable; directory pages will use a "
+                "direct connection and may be rate limited on some categories.")
     return ClutchFetcher(proxy_urls=tiers)

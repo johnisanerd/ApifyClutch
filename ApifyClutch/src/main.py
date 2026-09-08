@@ -246,13 +246,14 @@ async def _run() -> None:  # noqa: C901
                     f"{page_budget} were requested. Raise the budget or split the run.")
                 page_budget = affordable_pages
 
-        # Page 0 is read from the directory's `.md` twin: it is lighter than the
-        # HTML, carries website and description fields the HTML cards omit, and
-        # is the more reliable endpoint from the platform's shared egress.
-        # Deeper pages have no working `.md` (the `.md` ignores ?page=), so they
-        # fall back to the paginating HTML. Both carry a content marker so a
-        # soft-challenged page escalates through the proxy tiers instead of
-        # parsing to 0 rows.
+        # Page 0 is read from the directory's `.md` twin: it carries website and
+        # description fields the HTML cards omit. Deeper pages have no working
+        # `.md` (the `.md` ignores ?page=), so they use the paginating HTML. Both
+        # go through Apify Unblocker (`start_tier="unblocker"`): the platform's
+        # shared datacenter egress soft-challenges these heavy pages, returning a
+        # partial or empty body that direct-tier detection cannot catch. The
+        # content marker still gives a second line of defence (escalate on a
+        # stripped page); Unblocker's per-request price keeps the listing margin.
         targets: list[dict] = []
         for url in directory_urls:
             for page in range(max_pages):
@@ -275,8 +276,13 @@ async def _run() -> None:  # noqa: C901
 
             async def one(t: dict):
                 async with sem:
-                    return t, await fetcher.fetch(t["fetch"], expect=t["expect"])
-            return await asyncio.gather(*(one(t) for t in items))
+                    return await fetcher.fetch(
+                        t["fetch"], expect=t["expect"], start_tier="unblocker")
+            # return_exceptions=True: a raised fetch must never bubble out and
+            # abort the whole run silently (the /developers 0-row silent exit).
+            results = await asyncio.gather(
+                *(one(t) for t in items), return_exceptions=True)
+            return list(zip(items, results))
 
         for start in range(0, len(targets), CHUNK):
             if stop:
@@ -286,6 +292,10 @@ async def _run() -> None:  # noqa: C901
             for tgt, res in await fetch_dir_chunk(chunk):
                 if stop:
                     break
+                if isinstance(res, BaseException):
+                    Actor.log.warning(f"Directory page fetch raised: {type(res).__name__}")
+                    await _push_error(tgt["url"], "the page could not be read")
+                    continue
                 if not res.ok:
                     await _push_error(tgt["url"], res.error or "the page could not be read")
                     continue

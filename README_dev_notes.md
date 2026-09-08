@@ -19,15 +19,45 @@ Measured 2026-08-20, `curl_cffi` impersonating Chrome, **no proxy at all**:
 | Egress cost | ~$0.0000087 per profile @ $0.60/GB |
 
 This is the same result `ApifyMapsPlaceContacts` recorded against Google, and
-the same client `ApifyWellfoundJobs` already runs against Cloudflare. A proxy
-ladder (`direct` → `datacenter` → `residential`) stays in `fetcher.py` as a
-fallback but is **not** exposed in the input schema: under pay-per-event the
-platform bills the developer, so a visible residential toggle would let a caller
-spend ~10x the bandwidth at no cost to themselves.
+the same client `ApifyWellfoundJobs` already runs against Cloudflare.
 
-Rejected: BrightData Web Unlocker at ~$0.0015/request. It is ~170x more
-expensive than direct egress, adds a vendor-leak surface, and there is no
-maintained BrightData dataset for Clutch anyway.
+### CORRECTION 2026-09-07: that 0-challenge run was from a residential IP
+
+The 150-fetch measurement above was taken from a residential Mac IP, **not the
+platform**. On Apify's shared **datacenter egress** (where the actor actually
+runs), the light `.md` profile/search pages stay reliable, but the **heavy
+directory pages (1.2 to 2.7 MB HTML/md) get a Cloudflare soft challenge**: a
+`200` with a partial or empty body and no `cf-mitigated` header, which direct
+challenge detection cannot see. Directory task runs returned 18 / 40 / 45 / 50 /
+0 rows for categories that return 50 to 90 locally, and one run exited silently
+with 0 rows (fixed: the chunk loop now uses `return_exceptions=True` and turns a
+raised fetch into an error row).
+
+**Fix: split routing.** Directory fetches go through **Apify Unblocker**
+(`create_proxy_configuration(groups=['UNBLOCKER'])`, `start_tier="unblocker"`);
+profiles/search stay direct and escalate to Unblocker only on a real challenge.
+
+### Why Unblocker, and why not residential (the economics, for context)
+
+- Unblocker **bills per successful request** (~$0.0025/request on Free/Starter;
+  failed requests are not charged), **not per GB**. Directory pages are heavy, so
+  per-request pricing is decisive: $0.0025/page over 50 to 90 rows =
+  **$0.00003 to $0.00005/row COGS** vs a listing net of $0.00024/row (developer
+  keeps 80% of the $0.0003 BRONZE price) = **~5 to 8x margin**.
+- Residential ($8/GB) on a 1.2 to 2.7 MB page = $0.01 to $0.022/page = $0.0002 to
+  $0.00043/row, which **meets or exceeds** the listing price. Rejected.
+- Apify first-party, so **no third-party vendor, no Rule #6 leak surface, no new
+  dependency**. The `datacenter` and `residential` tiers were removed from
+  `build_fetcher`; the ladder is now `direct` -> `unblocker`.
+
+The split-routing pattern (heavy/challenged pages -> Unblocker; light pages ->
+direct) likely applies to other datacenter-challenged actors whose transport was
+validated off-platform. Confirm the per-request rate in the Console usage
+dashboard; the docs quote "$2.5 / 1,000 SERPs" for the same proxy line.
+
+Rejected earlier: BrightData Web Unlocker at ~$0.0015/request. It adds a
+vendor-leak surface, and there is no maintained BrightData dataset for Clutch.
+Apify Unblocker is the first-party equivalent with none of that.
 
 ## The markdown layer (the product)
 

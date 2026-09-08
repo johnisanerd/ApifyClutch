@@ -4,7 +4,7 @@ version = "1.0.0"
 description = "Apify Actor that collects structured records from a web data source."
 requires-python = ">=3.13"
 dependencies = [
-    "apify>=3.4,<4",
+    "apify>=4.0,<5",
     "apify-free-tier",
     "curl-cffi>=0.7,<1",
     "python-dotenv>=1.0,<2",

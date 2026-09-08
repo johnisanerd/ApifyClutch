@@ -200,7 +200,7 @@
         "type": "array",
         "title": "Packages",
         "description": "Fixed-price packages the company publishes.",
-        "example": ["Search Engine Optimization Packages — starting at $3,500/month"]
+        "example": ["Search Engine Optimization Packages, starting at $3,500/month"]
       },
       "review_rating_overall": {
         "type": "number",

@@ -138,9 +138,10 @@ subscription. Useful when an autonomous agent needs Clutch data on demand.
 
 ## Speed and reliability
 
-Pages are fetched with a browser-grade TLS fingerprint, which is what Clutch's
-protection actually checks. Measured across 150 consecutive profile fetches:
-**zero blocks** and a 0.12s median response. Requests inside a chunk run in
+Profiles and reviews are fetched with a browser-grade TLS fingerprint, which is
+what Clutch's protection actually checks, so they come back fast and clean.
+Directory category pages are heavier and better protected, so those go through
+Apify's unblocking proxy for reliable results. Requests inside a chunk run in
 parallel, and rows are written as each chunk completes, so a long run streams
 results rather than holding them to the end.
 

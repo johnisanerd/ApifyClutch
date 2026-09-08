@@ -2,16 +2,20 @@
 #    uv export --no-hashes --no-dev --format requirements-txt -o requirements.txt
 annotated-types==0.8.0
     # via pydantic
-apify==3.4.1
-    # via apifyclutch
-apify-client==2.5.1
-    # via apify
-apify-shared==2.3.0
+anyio==4.15.0
+    # via httpx
+apify==4.0.2
     # via
-    #   apify
-    #   apify-client
+    #   apify-free-tier
+    #   apifyclutch
+apify-client==3.2.0
+    # via apify
+apify-free-tier @ https://github.com/johnisanerd/Apify-Free-Tier-Limiter/archive/refs/tags/v0.1.8.tar.gz
+    # via apifyclutch
 async-timeout==5.0.1
     # via crawlee
+brotli==1.2.0
+    # via apify-client
 cachetools==7.1.7
     # via
     #   apify
@@ -19,6 +23,8 @@ cachetools==7.1.7
 certifi==2026.7.22
     # via
     #   curl-cffi
+    #   httpcore
+    #   httpx
     #   requests
 cffi==2.1.1
     # via
@@ -36,10 +42,23 @@ cryptography==50.0.0
     # via apify
 curl-cffi==0.16.2
     # via apifyclutch
+dnspython==2.8.0
+    # via email-validator
+email-validator==2.3.0
+    # via pydantic
 filelock==3.32.4
     # via tldextract
+h11==0.16.0
+    # via httpcore
+httpcore==1.0.9
+    # via httpx
+httpx==0.28.1
+    # via apify-free-tier
 idna==3.19
     # via
+    #   anyio
+    #   email-validator
+    #   httpx
     #   requests
     #   tldextract
     #   yarl
@@ -68,6 +87,7 @@ pycparser==3.0 ; implementation_name != 'PyPy'
 pydantic==2.13.4
     # via
     #   apify
+    #   apify-client
     #   crawlee
     #   pydantic-settings
 pydantic-core==2.46.4
@@ -88,7 +108,9 @@ tldextract==5.3.2
     # via crawlee
 typing-extensions==4.16.0
     # via
+    #   anyio
     #   apify
+    #   apify-client
     #   crawlee
     #   pydantic
     #   pydantic-core
