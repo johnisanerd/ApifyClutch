@@ -37,18 +37,51 @@
     "events": [
       {
         "name": "listing-scraped",
+        "title": "Company listing scraped",
         "price": 0.0003,
+        "tiers": {
+          "FREE": 0.0004,
+          "BRONZE": 0.0003,
+          "SILVER": 0.00027,
+          "GOLD": 0.00024,
+          "PLATINUM": 0.00024,
+          "DIAMOND": 0.00024
+        },
         "description": "Fee per company row returned from a directory or category page. Charged once for each listing pushed to the dataset."
       },
       {
         "name": "profile-scraped",
+        "title": "Company profile scraped",
         "price": 0.0025,
+        "tiers": {
+          "FREE": 0.0029,
+          "BRONZE": 0.0025,
+          "SILVER": 0.00225,
+          "GOLD": 0.002,
+          "PLATINUM": 0.002,
+          "DIAMOND": 0.002
+        },
         "description": "Fee per full company profile returned, including ratings, pricing, service mix, focus areas, industries and locations. Charged once for each profile pushed to the dataset."
       },
       {
         "name": "review-scraped",
+        "title": "Client review scraped",
         "price": 0.0003,
+        "tiers": {
+          "FREE": 0.0004,
+          "BRONZE": 0.0003,
+          "SILVER": 0.00027,
+          "GOLD": 0.00024,
+          "PLATINUM": 0.00024,
+          "DIAMOND": 0.00024
+        },
         "description": "Fee per client review returned. Charged once for each review pushed to the dataset. Only charged when reviews are enabled."
+      },
+      {
+        "name": "apify-default-dataset-item",
+        "title": "Dataset item stored",
+        "price": 0.00001,
+        "description": "Platform accounting charge, applied per row stored in the dataset."
       }
     ]
   }
