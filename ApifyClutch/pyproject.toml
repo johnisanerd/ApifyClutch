@@ -7,13 +7,16 @@ dependencies = [
     "apify>=4.0,<5",
     "apify-free-tier",
     "curl-cffi>=0.7,<1",
+    "email-enrich",
     "python-dotenv>=1.0,<2",
 ]
 
 [tool.uv]
 package = false
 
-# Pinned to a release tag, not a branch, so a rebuild is reproducible. The
-# tarball form needs no git binary inside the Actor image.
+# apify-free-tier is a public tarball (no git in the image). email-enrich is a
+# private git tag. The Dockerfile builder stage injects GH_EMAIL_ENRICH_TOKEN
+# via git insteadOf so the token never lands in this file or uv.lock.
 [tool.uv.sources]
 apify-free-tier = { url = "https://github.com/johnisanerd/Apify-Free-Tier-Limiter/archive/refs/tags/v0.1.8.tar.gz" }
+email-enrich = { git = "https://github.com/johnisanerd/Apify-Email-Enrich-Module.git", tag = "v0.1.2" }

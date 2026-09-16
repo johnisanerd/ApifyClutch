@@ -103,7 +103,7 @@ else:
 token = os.environ.get("APIFY_TOKEN")
 if token:
     print("APIFY_TOKEN found; live mcp.apify.com round-trip is the end-to-end gate.")
-    print("Drive johnvc/lawyer-directory-api through https://mcp.apify.com and confirm status=SUCCEEDED, meta.origin=MCP.")
+    print("Drive johnvc/clutch-agency-api through https://mcp.apify.com and confirm status=SUCCEEDED, meta.origin=MCP.")
 else:
     print("APIFY_TOKEN not set; offline-only coverage. Set APIFY_TOKEN for the end-to-end check.")
 

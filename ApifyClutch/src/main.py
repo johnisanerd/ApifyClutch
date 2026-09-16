@@ -52,6 +52,7 @@ from .clutch import (
     review_page_url,
     search_url,
 )
+from .enrich_addon import maybe_enrich_business_rows
 from .fetcher import build_fetcher
 
 load_dotenv()
@@ -230,6 +231,13 @@ async def _run() -> None:  # noqa: C901
     total = 0
     stop = False
 
+    async def _push_row(row: dict) -> None:
+        """Enrich (opt-in Module B) then push one dataset row."""
+        enriched = await maybe_enrich_business_rows(
+            [row], actor_input=actor_input, actor=Actor
+        )
+        await Actor.push_data(_clean(enriched[0]))
+
     async def fetch_many(urls: list[str], expect: str | None = None) -> list:
         """Fetch a chunk concurrently, preserving input order.
 
@@ -370,7 +378,7 @@ async def _run() -> None:  # noqa: C901
                     if key in seen_companies:
                         continue
                     seen_companies.add(key)
-                    await Actor.push_data(_clean({**row, "fetched_at": _now()}))
+                    await _push_row({**row, "fetched_at": _now()})
                     total += 1
                     if await _charge("listing-scraped", 1):
                         Actor.log.warning(
@@ -455,7 +463,7 @@ async def _run() -> None:  # noqa: C901
                 if total >= max_items:
                     stop = True
                     break
-                await Actor.push_data(_clean({**row, "fetched_at": _now()}))
+                await _push_row({**row, "fetched_at": _now()})
                 total += 1
                 if await _charge("profile-scraped", 1):
                     Actor.log.warning(
@@ -496,6 +504,7 @@ async def _run() -> None:  # noqa: C901
                     if total >= max_items:
                         stop = True
                         break
+                    # Reviews are not enrichable; push without Module B work.
                     await Actor.push_data(_clean({
                         **review,
                         "company_name": row.get("name"),

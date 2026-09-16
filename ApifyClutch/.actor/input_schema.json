@@ -91,6 +91,21 @@
       "default": 1000,
       "minimum": 1,
       "maximum": 10000
+    },
+    "enrichBusinessEmail": {
+      "title": "Enrich business contact email",
+      "type": "boolean",
+      "description": "Optional add-on. When enabled, each company listing/profile row is enriched with a published contact email from the company website (crawl + BounceVerify). Reviews and errors are skipped. Default off. Charged separately via business-email-verified ($0.0125) or business-email-lookup attempt fee ($0.005). Worst case ≈ maxBusinessEmailsPerRun × $0.005 + finds × $0.0125.",
+      "default": false
+    },
+    "maxBusinessEmailsPerRun": {
+      "title": "Max business email attempts per run",
+      "type": "integer",
+      "description": "Caps charged Module B attempts (successes and miss fees), not only delivered emails. Keeps pilot spend bounded. Only used when Enrich business contact email is on.",
+      "editor": "number",
+      "default": 50,
+      "minimum": 1,
+      "maximum": 500
     }
   },
   "required": ["mode"]

@@ -78,6 +78,34 @@
         "description": "Fee per client review returned. Charged once for each review pushed to the dataset. Only charged when reviews are enabled."
       },
       {
+        "name": "business-email-verified",
+        "title": "Business contact email verified",
+        "price": 0.0125,
+        "tiers": {
+          "FREE": 0.05,
+          "BRONZE": 0.0125,
+          "SILVER": 0.0125,
+          "GOLD": 0.0125,
+          "PLATINUM": 0.0125,
+          "DIAMOND": 0.0125
+        },
+        "description": "Optional Module B add-on. Charged when a published company-website contact email is verified and delivered. Requires enrichBusinessEmail."
+      },
+      {
+        "name": "business-email-lookup",
+        "title": "Business email attempt fee",
+        "price": 0.005,
+        "tiers": {
+          "FREE": 0.05,
+          "BRONZE": 0.005,
+          "SILVER": 0.005,
+          "GOLD": 0.005,
+          "PLATINUM": 0.005,
+          "DIAMOND": 0.005
+        },
+        "description": "Optional Module B attempt fee when crawl/verify ran and no verified email was delivered. Never stacks on a find. Requires enrichBusinessEmail."
+      },
+      {
         "name": "apify-default-dataset-item",
         "title": "Dataset item stored",
         "price": 0.00001,
