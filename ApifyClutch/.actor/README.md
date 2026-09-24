@@ -179,6 +179,17 @@ Ready-made Claude and agent skills that wrap this Actor around one outcome. Inst
 - [claude-skill-company-data-api](https://github.com/johnisanerd/claude-skill-company-data-api): pull structured company records from Clutch profiles for CRM enrichment.
 - [claude-skill-marketing-agency-database](https://github.com/johnisanerd/claude-skill-marketing-agency-database): build a marketing agency database from any Clutch directory.
 
+<!-- ask-ai:start -->
+## 🤖 Ask an AI assistant about this API
+
+Open a ready-to-send prompt about the Clutch.co Agency API in the AI of your choice:
+
+- 💬 [ChatGPT](https://chatgpt.com/?q=Using%20the%20Clutch.co%20Agency%20API%20on%20Apify%20%28https://apify.com/johnvc/clutch-agency-api?fpr=9n7kx3%29%2C%20walk%20me%20through%20this%20use%20case:%20%22Clutch%20Company%20Data%20API%20as%20JSON%20for%20Your%20CRM%22.%20Show%20me%20the%20input%20JSON%2C%20the%20output%20fields%2C%20and%20how%20to%20automate%20it%20with%20the%20API%20or%20MCP.)
+- 🧠 [Claude](https://claude.ai/new?q=Using%20the%20Clutch.co%20Agency%20API%20on%20Apify%20%28https://apify.com/johnvc/clutch-agency-api?fpr=9n7kx3%29%2C%20walk%20me%20through%20this%20use%20case:%20%22Clutch%20Company%20Data%20API%20as%20JSON%20for%20Your%20CRM%22.%20Show%20me%20the%20input%20JSON%2C%20the%20output%20fields%2C%20and%20how%20to%20automate%20it%20with%20the%20API%20or%20MCP.)
+- 🔍 [Perplexity](https://www.perplexity.ai/search?q=Using%20the%20Clutch.co%20Agency%20API%20on%20Apify%20%28https://apify.com/johnvc/clutch-agency-api?fpr=9n7kx3%29%2C%20walk%20me%20through%20this%20use%20case:%20%22Clutch%20Company%20Data%20API%20as%20JSON%20for%20Your%20CRM%22.%20Show%20me%20the%20input%20JSON%2C%20the%20output%20fields%2C%20and%20how%20to%20automate%20it%20with%20the%20API%20or%20MCP.)
+- 🅒 [Copilot](https://copilot.microsoft.com/?q=Using%20the%20Clutch.co%20Agency%20API%20on%20Apify%20%28https://apify.com/johnvc/clutch-agency-api?fpr=9n7kx3%29%2C%20walk%20me%20through%20this%20use%20case:%20%22Clutch%20Company%20Data%20API%20as%20JSON%20for%20Your%20CRM%22.%20Show%20me%20the%20input%20JSON%2C%20the%20output%20fields%2C%20and%20how%20to%20automate%20it%20with%20the%20API%20or%20MCP.)
+<!-- ask-ai:end -->
+
 ## ❓ FAQ
 
 **Do I need a Clutch account or API key?**
