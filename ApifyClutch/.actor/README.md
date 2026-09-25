@@ -249,4 +249,4 @@ you use the data, including under GDPR and CCPA where applicable.
 
 Built and maintained by [Alpha OSINT](https://www.alphaosint.com), a portfolio
 of open-source-intelligence and market-data APIs on Apify.
-Last Updated: 2026.09.22
+Last Updated: 2026.09.25
