@@ -171,7 +171,7 @@ promises "no start fee," and the tripadvisor precedent runs with only the
 dataset-item default. First-time monetization is immediate (no 14-day window).
 
 Benchmarks (live 2026-09-03): memo23 (leader, 740 users, 4.6 stars, company
-$0.0029 + $0.00075/review), crawlerbros (broken incumbent, 1345 users, 16%
+$0.0029 + $0.00075/review), crawlerbros (broken incumbent, 1345 users, 16% (removed from the Apify Store, Oct 2026; see github-bd store-shutdowns-2026-10-22)
 success, GOLD $0.005 + $0.005 start), piotrv1001 (listings $0.0015, 1218 users),
 fatihtahta (price floor, listing $0.0007-0.0009). A memo23 "company + 10 reviews"
 is $0.0104; ours is $0.0055 for the same data plus markdown.
@@ -266,7 +266,7 @@ directory mode). Built with the `apify-publish-agent-skills` workflow.
 Does **not** rank top-5 for "clutch" or "clutch agency" (new actor, ~0 usage;
 rank ~= title-keyword x popularity). The niche is now **saturated: 13+ rivals**.
 Only `danthedataman/clutch-agency-directory` has real traction (~12 monthly);
-memo23 (818 users, quality leader, $0.0029/company) and crawlerbros (1347 users,
+memo23 (818 users, quality leader, $0.0029/company) and crawlerbros (1347 users, (removed from the Apify Store, Oct 2026; see github-bd store-shutdowns-2026-10-22)
 broken incumbent) hold the installed base; the rest (`dami_studio`, `psymall`,
 `khadinakbar`, `happitap`, `saswave`, `powerai`, `automation-lab`, `samstorm`,
 `jungle_synthesizer`) are mostly pre-flywheel. We are the price floor on
