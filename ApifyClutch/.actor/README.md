@@ -156,7 +156,6 @@ Google Sheets, or a vector store, or let an agent call it over MCP.
 - [Google Maps Places API](https://apify.com/johnvc/google-maps-places-api?fpr=9n7kx3): local business data with contact details.
 - [LinkedIn Company API](https://apify.com/johnvc/linkedin-company-api?fpr=9n7kx3): company firmographics and headcount.
 - [Crunchbase Company API](https://apify.com/johnvc/crunchbase-company-api?fpr=9n7kx3): funding and investor data.
-- [G2 Reviews API](https://apify.com/johnvc/g2-reviews-api?fpr=9n7kx3): software reviews, the B2B software counterpart to Clutch.
 
 More at [Alpha OSINT](https://www.alphaosint.com).
 
